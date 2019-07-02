@@ -29,9 +29,9 @@ import (
 )
 
 var (
-	CRCHome    string
-	bundleURL  string
-	bundleName string
+	CRCHome        string
+	BundleLocation string
+	BundleName     string
 )
 
 // FeatureContext defines godog.Suite steps for the test suite.
@@ -58,10 +58,11 @@ func FeatureContext(s *godog.Suite) {
 		DeleteFileFromCRCHome)
 
 	s.BeforeSuite(func() {
-		// set CRC home var
+		// Set suite vars
 		CRCHome = SetCRCHome()
+		BundleName = SetBundleName()
 
-		// remove $HOME/.crc
+		// Remove $HOME/.crc
 		err := RemoveCRCHome()
 		if err != nil {
 			fmt.Println(err)
@@ -78,18 +79,20 @@ func FeatureContext(s *godog.Suite) {
 
 	s.BeforeFeature(func(this *gherkin.Feature) {
 
-		if _, err := os.Stat(bundleName); os.IsNotExist(err) {
+		if _, err := os.Stat(BundleName); os.IsNotExist(err) {
 			// Obtain the bundle to current dir
 			fmt.Println("Obtaining bundle...")
-			bundle, err := DownloadBundle(bundleURL, ".")
+			bundle, err := GetBundle(BundleLocation, ".")
 			if err != nil {
 				fmt.Errorf("Failed to obtain CRC bundle, %v\n", err)
+				os.Exit(1)
+			} else {
+				fmt.Println("Using bundle:", bundle)
 			}
-			fmt.Println("Using bundle:", bundle)
 		} else if err != nil {
-			fmt.Errorf("Unknown error obtaining the bundle %v.\n", bundleName)
+			fmt.Errorf("Unknown error obtaining the bundle %v.\n", BundleName)
 		} else {
-			fmt.Println("Using existing bundle:", bundleName)
+			fmt.Println("Using existing bundle:", BundleName)
 		}
 
 	})
@@ -173,7 +176,7 @@ func ConfigFileInCRCHomeContainsKey(format string, configFile string, condition 
 
 func StartCRCWithDefaultBundleAndDefaultHypervisorSucceedsOrFails(expected string) error {
 
-	cmd := "crc start -b " + bundleName
+	cmd := "crc start -b " + BundleName
 	err := clicumber.ExecuteCommandSucceedsOrFails(cmd, expected)
 
 	return err
@@ -181,7 +184,7 @@ func StartCRCWithDefaultBundleAndDefaultHypervisorSucceedsOrFails(expected strin
 
 func StartCRCWithDefaultBundleAndHypervisorSucceedsOrFails(hypervisor string, expected string) error {
 
-	cmd := "crc start -b " + bundleName + " -d " + hypervisor
+	cmd := "crc start -b " + BundleName + " -d " + hypervisor
 	err := clicumber.ExecuteCommandSucceedsOrFails(cmd, expected)
 
 	return err

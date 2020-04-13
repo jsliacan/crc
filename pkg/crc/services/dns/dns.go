@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	dnsServicePort              = 53
-	dnsConfigFilePathInInstance = "/var/srv/dnsmasq.conf"
-	dnsContainerIP              = "10.88.0.8"
-	dnsContainerImage           = "quay.io/crcont/dnsmasq:latest"
-	publicDNSQueryURI           = "quay.io"
+	dnsServicePort                  = 53
+	dnsConfigFilePathInInstance     = "/var/srv/dnsmasq.conf"
+	dnsHostConfigFilePathInInstance = "/var/srv/hosts.openshift"
+	dnsContainerIP                  = "10.88.0.8"
+	dnsContainerImage               = "quay.io/crcont/dnsmasq:latest"
+	publicDNSQueryURI               = "quay.io"
 )
 
 func init() {
@@ -39,6 +40,26 @@ func RunPostStart(serviceConfig services.ServicePostStartConfig) (services.Servi
 
 	// Remove the dnsmasq container if it exists during the VM stop cycle
 	_, _ = serviceConfig.SSHRunner.Run("sudo podman rm -f dnsmasq")
+
+	// Add a virtual dummy network interface and set the IP as `192.168.126.11` which is the IP used to create the bundle
+	if _, err := serviceConfig.SSHRunner.Run("sudo ip link add eth10 type dummy && sudo ip addr add 192.168.126.11/24 dev eth10"); err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		return *result, err
+	}
+	// Todo: Move those to snc script when start building for 4.4 bundles
+	// Add node-ip field in kublet service and set it to the static IP `192.168.126.11`
+	if _, err := serviceConfig.SSHRunner.Run(`sudo sed -i.back '/kubelet /a\      \--node-ip=192.168.126.11 \\' /etc/systemd/system/kubelet.service`); err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		return *result, err
+	}
+	// Reload the kubelet service since the service changed happen
+	if _, err = serviceConfig.SSHRunner.Run("sudo systemctl daemon-reload"); err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		return *result, err
+	}
 
 	// Remove the CNI network definition forcefully
 	// https://github.com/containers/libpod/issues/2767

@@ -353,7 +353,7 @@ func StartCRCWithDefaultBundleSucceedsOrFails(expected string) error {
 	if bundleEmbedded == false {
 		extraBundleArgs = fmt.Sprintf("-b %s", bundleName)
 	}
-	cmd = fmt.Sprintf("crc start -p '%s' %s --log-level debug", pullSecretFile, extraBundleArgs)
+	cmd = fmt.Sprintf("crc start -p '%s' %s -m 10240 --log-level debug", pullSecretFile, extraBundleArgs)
 	err := clicumber.ExecuteCommandSucceedsOrFails(cmd, expected)
 
 	return err
@@ -368,7 +368,7 @@ func StartCRCWithDefaultBundleAndNameServerSucceedsOrFails(nameserver string, ex
 
 	var cmd string
 
-	cmd = fmt.Sprintf("crc start -n %s -p '%s' %s --log-level debug", nameserver, pullSecretFile, extraBundleArgs)
+	cmd = fmt.Sprintf("crc start -n %s -p '%s' %s -m 10240 --log-level debug", nameserver, pullSecretFile, extraBundleArgs)
 	err := clicumber.ExecuteCommandSucceedsOrFails(cmd, expected)
 
 	return err

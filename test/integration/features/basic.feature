@@ -138,3 +138,43 @@ Feature: Basic test
     Scenario: CRC delete
         When executing "crc delete -f" succeeds
         Then stdout should contain "Deleted the OpenShift cluster"
+
+    Scenario Outline: CRC clean-up
+        When executing "crc cleanup" succeeds
+        Then stdout should contain "<cleanup step>"
+
+        @darwin
+        Examples:
+            | cleanup step                                            |
+            | Unload CodeReady Containers tray                        |
+            | Unload CodeReady Containers daemon                      |
+            | Removing launchd configuration for tray                 |
+            | Removing launchd configuration for daemon               |
+            | Removing current user permission for /etc/hosts file    |
+            | Will use root access: change ownership of /etc/hosts    |
+            | Removing /etc/resolver/testing file                     |
+            | Will use root access: Remove file /etc/resolver/testing |
+            | Cleanup finished                                        |
+
+        @linux
+        Examples:
+            | cleanup step                                                                                           |
+            | Removing the crc VM if exists                                                                          |
+            | Removing /etc/NetworkManager/dnsmasq.d/crc.conf file                                                   |
+            | Will use root access: removing dnsmasq configuration in /etc/NetworkManager/dnsmasq.d/crc.conf         |
+            | Will use root access: execute systemctl daemon-reload command                                          |
+            | Will use root access: execute systemctl stop/start command                                             |
+            | Removing /etc/NetworkManager/conf.d/crc-nm-dnsmasq.conf file                                           |
+            | Will use root access: Removing NetworkManager config in /etc/NetworkManager/conf.d/crc-nm-dnsmasq.conf |
+            | Will use root access: execute systemctl daemon-reload command                                          |
+            | Will use root access: execute systemctl stop/start command                                             |
+            | Removing 'crc' network from libvirt                                                                    |
+            | Cleanup finished                                                                                       |
+
+        @windows
+        Examples:
+            | cleanup step                                           |
+            | Removing the crc VM if exists                          |
+            | Removing dns server from interface                     |
+            | Will run as admin: Remove dns entry for default switch |
+            | Cleanup finished                                       |

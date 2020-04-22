@@ -18,16 +18,16 @@
 &nbsp;&nbsp;&nbsp;&nbsp;`start` or `delete`  
 &nbsp;&nbsp;**else**  
 &nbsp;&nbsp;&nbsp;&nbsp;**if** VM off **then**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`delete`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`delete`   // no start because of failed stop  
 &nbsp;&nbsp;&nbsp;&nbsp;**else**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`stop -f`    // always successful?  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`stop -f`   // instead of stop, otherwise cyclic  
 
 3. `delete`  
 &nbsp;&nbsp;**if** SUCCESS **then**  
 &nbsp;&nbsp;&nbsp;&nbsp;`start`  
 &nbsp;&nbsp;**else**  
 &nbsp;&nbsp;&nbsp;&nbsp;**if** VM exists **then**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`start`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`start` or `delete -f`
 &nbsp;&nbsp;&nbsp;&nbsp;**else**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`delete -f`   // always successful?  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`delete -f`   // instead of delete, otherwise cyclic  
 

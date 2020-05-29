@@ -68,7 +68,6 @@ Checks whether CRC `config set` command works as expected in conjunction with `c
         Examples: Config warnings on Mac
             | property                             | value1 | value2 |
             | warn-check-bundle-cached             | true   | false  |
-            | warn-check-hosts-file-permissions    | true   | false  |
             | warn-check-hyperkit-driver           | true   | false  |
             | warn-check-hyperkit-installed        | true   | false  |
             | warn-check-resolver-file-permissions | true   | false  |
@@ -121,7 +120,6 @@ Checks whether CRC `config set` command works as expected in conjunction with `c
         Examples:
             | property                             | value1 | value2 |
             | skip-check-bundle-cached             | true   | false  |
-            | skip-check-hosts-file-permissions    | true   | false  |
             | skip-check-hyperkit-driver           | true   | false  |
             | skip-check-hyperkit-installed        | true   | false  |
             | skip-check-resolver-file-permissions | true   | false  |

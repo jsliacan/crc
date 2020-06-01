@@ -70,3 +70,5 @@ Feature:
         Then stdout should match "(.*)[Ss]topped the OpenShift cluster"
         When executing "crc delete -f" succeeds
         Then stdout should contain "Deleted the OpenShift cluster"
+        And executing "crc cleanup" succeeds
+        And stdout contains "Cleanup finished"

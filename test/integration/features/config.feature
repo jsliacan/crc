@@ -194,4 +194,5 @@ Checks whether CRC `config set` command works as expected in conjunction with `c
        When removing file "crc.json" from CRC home folder succeeds
        And executing "crc setup" succeeds
        Then stdout should not contain "Skipping above check"
+       And executing "crc cleanup" succeeds
        

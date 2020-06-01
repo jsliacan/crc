@@ -137,3 +137,8 @@ Feature: Basic test
     Scenario: CRC delete
         When executing "crc delete -f" succeeds
         Then stdout should contain "Deleted the OpenShift cluster"
+
+    @darwin @linux @windows
+    Scenario: CRC cleanup
+        When executing "crc cleanup" succeeds
+        Then stdout should contain "Cleanup finished"

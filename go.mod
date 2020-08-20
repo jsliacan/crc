@@ -11,6 +11,7 @@ require (
 	github.com/code-ready/clicumber v0.0.0-20200728062640-1203dda97f67
 	github.com/code-ready/gvisor-tap-vsock v0.0.0-20201105131011-9258bacc7a6c
 	github.com/code-ready/machine v0.0.0-20201202090222-9558ae8c05b9
+	github.com/coreos/etcd v3.3.15+incompatible // indirect
 	github.com/cucumber/godog v0.9.0
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/docker v1.13.1 // indirect
@@ -57,7 +58,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06
 	k8s.io/api v0.19.0
-	k8s.io/client-go v0.19.0
+	k8s.io/client-go v8.0.0+incompatible
 )
 
 replace (

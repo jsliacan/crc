@@ -338,7 +338,7 @@ func StartCRCWithDefaultBundleSucceedsOrFails(expected string) error {
 	var extraBundleArgs string
 
 	if !bundleEmbedded {
-		extraBundleArgs = fmt.Sprintf("-b %s", bundleName)
+		extraBundleArgs = fmt.Sprintf("-b %#v", bundleName)
 	}
 	cmd = fmt.Sprintf("crc start -p '%s' %s --log-level debug", pullSecretFile, extraBundleArgs)
 	err := clicumber.ExecuteCommandSucceedsOrFails(cmd, expected)

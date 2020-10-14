@@ -1,6 +1,10 @@
 SHELL := /bin/bash
 
 BUNDLE_VERSION = 4.6.3
+# OC_VERSION and BUNDLE_VERSION are going to same for release artifacts but
+# different for nightly and CI bits where bundle version would be any random
+# string or dd-mm-yyyy format.
+OC_VERSION ?= ${BUNDLE_VERSION}
 BUNDLE_EXTENSION = crcbundle
 CRC_VERSION = 1.19.0
 COMMIT_SHA=$(shell git rev-parse --short HEAD)

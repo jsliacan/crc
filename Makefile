@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-BUNDLE_VERSION = 4.6.0-rc.3
+BUNDLE_VERSION = 4.5.14
 # OC_VERSION and BUNDLE_VERSION are going to same for release artifacts but
 # different for nightly and CI bits where bundle version would be any random
 # string or dd-mm-yyyy format.
@@ -128,7 +128,7 @@ build_integration: $(SOURCES)
 
 .PHONY: integration ## Run integration tests
 integration:
-GODOG_OPTS = --godog.tags=$(GOOS)
+GODOG_OPTS = --godog.format=junit --godog.tags='linux && dummy'
 ifndef PULL_SECRET_FILE
 	PULL_SECRET_FILE = --pull-secret-file=$(HOME)/Downloads/crc-pull-secret
 endif

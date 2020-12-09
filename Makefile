@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-BUNDLE_VERSION = 4.6.6
+BUNDLE_VERSION = 4.7.0-0.nightly-2020-12-04-013308
 BUNDLE_EXTENSION = crcbundle
 CRC_VERSION = 1.20.0
 COMMIT_SHA=$(shell git rev-parse --short HEAD)

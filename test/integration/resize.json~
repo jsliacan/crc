@@ -1,0 +1,59 @@
+{
+	"topicName": "resize"
+	"cases": [
+		{
+			"name": "custom",
+			"expect": "pass",
+			"error": "nil",
+			"parameters": [
+				"cpu": 6,
+				"disk": 40,
+				"memory": 12000
+			]
+		}
+		{
+			"name": "insufficient memory",
+			"expect": "fail",
+			"error": "requires memory in MiB >= 9216",
+			"parameters": [
+				"memory": 9000
+			]
+		}
+		{
+			"name": "insufficient cpus",
+			"expect": "fail",
+			"error": "",
+			"parameters": [
+				"cpu": 3
+			]
+		}
+		{
+			"name": "smaller disk of valid size",
+			"expect": "fail",
+			"error": "",
+			"parameters": [
+				"disk": 35
+			]
+		}
+		{
+			"name": "smaller disk of insufficient size",
+			"expect": "fail",
+			"error": "",
+			"parameters": [
+				"disk": 30
+			]
+		}
+		{
+			"name": "default",
+			"expect": "pass",
+			"error": "",
+			"parameters": [
+				"cpu": null,
+				"disk": null,
+				"memory": null
+			]
+		}
+		
+	]
+	
+}

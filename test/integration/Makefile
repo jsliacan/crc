@@ -1,10 +1,9 @@
 SHELL := /bin/bash
 
-BUNDLE_VERSION = 4.6.12
+BUNDLE_VERSION = 4.6.6
 BUNDLE_EXTENSION = crcbundle
-CRC_VERSION = 1.21.0
+CRC_VERSION = 1.20.0
 COMMIT_SHA=$(shell git rev-parse --short HEAD)
-MACOS_INSTALL_PATH = /Library/CodeReady Containers
 CONTAINER_RUNTIME ?= podman
 
 ifdef OKD_VERSION
@@ -50,10 +49,8 @@ __check_defined = \
 
 # Linker flags
 VERSION_VARIABLES := -X $(REPOPATH)/pkg/crc/version.crcVersion=$(CRC_VERSION) \
-	-X $(REPOPATH)/pkg/crc/version.bundleVersion=$(BUNDLE_VERSION) \
+    -X $(REPOPATH)/pkg/crc/version.bundleVersion=$(BUNDLE_VERSION) \
 	-X $(REPOPATH)/pkg/crc/version.commitSha=$(COMMIT_SHA)
-RELEASE_VERSION_VARIABLES := -X $(REPOPATH)/pkg/crc/segment.WriteKey=cvpHsNcmGCJqVzf6YxrSnVlwFSAZaYtp \
-	-X $(REPOPATH)/pkg/crc/version.isRelease=true
 
 ifdef OKD_VERSION
 	VERSION_VARIABLES := $(VERSION_VARIABLES) -X $(REPOPATH)/pkg/crc/version.okdBuild=true
@@ -77,7 +74,7 @@ vendorcheck:
 	./verify-vendor.sh
 
 .PHONY: check
-check: cross build_e2e $(HOST_BUILD_DIR)/crc-embedder test cross-lint vendorcheck
+check: cross build_integration $(HOST_BUILD_DIR)/crc-embedder test cross-lint vendorcheck
 
 # Start of the actual build targets
 
@@ -102,7 +99,7 @@ cross: $(BUILD_DIR)/macos-amd64/crc $(BUILD_DIR)/linux-amd64/crc $(BUILD_DIR)/wi
 
 .PHONY: test
 test:
-	go test -race --tags build -v -ldflags="$(VERSION_VARIABLES)" ./pkg/... ./cmd/...
+	go test --tags build -v -ldflags="$(VERSION_VARIABLES)" ./pkg/... ./cmd/...
 
 .PHONY: build_docs
 build_docs:
@@ -120,42 +117,36 @@ docs_serve: build_docs
 docs_check_links:
 	${CONTAINER_RUNTIME} run -it -v $(CURDIR)/docs:/docs:Z --rm $(DOCS_BUILD_CONTAINER) docs_check_links
 
-.PHONY: clean_docs clean_macos_package
+.PHONY: clean_docs
 clean_docs:
 	rm -rf $(CURDIR)/docs/build
 
-clean_macos_package:
-	rm -f packaging/darwin/Distribution
-	rm -f packaging/darwin/Resources/welcome.html
-	rm -f packaging/darwin/scripts/postinstall
-	rm -rf packaging/root/
-
 .PHONY: clean ## Remove all build artifacts
-clean: clean_docs clean_macos_package
+clean: clean_docs
 	rm -rf $(BUILD_DIR)
 	rm -f $(GOPATH)/bin/crc
 	rm -rf $(RELEASE_DIR)
 
-.PHONY: build_e2e
-build_e2e: $(SOURCES)
-	GOOS=linux   go test ./test/e2e/ -c -o $(BUILD_DIR)/linux-amd64/e2e.test
-	GOOS=windows go test ./test/e2e/ -c -o $(BUILD_DIR)/windows-amd64/e2e.test.exe
-	GOOS=darwin  go test ./test/e2e/ -c -o $(BUILD_DIR)/macos-amd64/e2e.test
+.PHONY: build_integration
+build_integration: $(SOURCES)
+	GOOS=linux   go test ./test/integration/ -c -o $(BUILD_DIR)/linux-amd64/integration.test
+	GOOS=windows go test ./test/integration/ -c -o $(BUILD_DIR)/windows-amd64/integration.test.exe
+	GOOS=darwin  go test ./test/integration/ -c -o $(BUILD_DIR)/macos-amd64/integration.test
 
-.PHONY: integration ## Run integration tests in Ginkgo
-integration:
+.PHONY: gintegration ## Run integration tests in Ginkgo
+gintegration:
 ifndef PULL_SECRET
 PULL_SECRET = $(HOME)/Downloads/crc-pull-secret
 endif
 ifndef BUNDLE
 BUNDLE = $(HOME)/Downloads/crc_libvirt_$(BUNDLE_VERSION).$(BUNDLE_EXTENSION)
 endif
-integration:
+gintegration:
 	@go test -timeout=60m $(REPOPATH)/test/ginkgo -v
 
-.PHONY: e2e ## Run e2e tests
-e2e:
-GODOG_OPTS = --godog.tags=$(GOOS)
+.PHONY: integration ## Run integration tests in Cucumber
+integration:
+GODOG_OPTS = --godog.tags='linux && basic'
 ifndef PULL_SECRET_FILE
 	PULL_SECRET_FILE = --pull-secret-file=$(HOME)/Downloads/crc-pull-secret
 endif
@@ -165,8 +156,8 @@ endif
 ifndef CRC_BINARY
 	CRC_BINARY = --crc-binary=$(GOPATH)/bin
 endif
-e2e:
-	@go test --timeout=180m $(REPOPATH)/test/e2e -v $(PULL_SECRET_FILE) $(BUNDLE_LOCATION) $(CRC_BINARY) --bundle-version=$(BUNDLE_VERSION) $(GODOG_OPTS)
+integration:
+	@go test --timeout=180m $(REPOPATH)/test/integration -v $(PULL_SECRET_FILE) $(BUNDLE_LOCATION) $(CRC_BINARY) --bundle-version=$(BUNDLE_VERSION) $(GODOG_OPTS)
 
 .PHONY: fmt
 fmt:
@@ -192,7 +183,6 @@ gen_release_info:
 	@sed -i s/@OPENSHIFT_VERSION@/\"$(BUNDLE_VERSION)\"/ $(RELEASE_INFO)
 
 .PHONY: release
-release: LDFLAGS += $(RELEASE_VERSION_VARIABLES)
 release: cross-lint embed_bundle build_docs_pdf gen_release_info
 	mkdir $(RELEASE_DIR)
 	
@@ -235,32 +225,3 @@ update-go-version:
 .PHONY: goversioncheck
 goversioncheck:
 	./verify-go-version.sh
-
-package: LDFLAGS+= -X '$(REPOPATH)/pkg/crc/version.macosInstallPath=$(MACOS_INSTALL_PATH)' $(RELEASE_VERSION_VARIABLES)
-package: clean check_bundledir $(BUILD_DIR)/macos-amd64/crc $(HOST_BUILD_DIR)/crc-embedder
-	sed -e 's/__VERSION__/'$(CRC_VERSION)'/g' -e 's@__INSTALL_PATH__@$(MACOS_INSTALL_PATH)@g' packaging/darwin/Distribution.in >packaging/darwin/Distribution
-	sed -e 's/__VERSION__/'$(CRC_VERSION)'/g' -e 's@__INSTALL_PATH__@$(MACOS_INSTALL_PATH)@g' packaging/darwin/welcome.html.in >packaging/darwin/Resources/welcome.html
-	sed -e 's/__VERSION__/'$(CRC_VERSION)'/g' -e 's@__INSTALL_PATH__@$(MACOS_INSTALL_PATH)@g' packaging/darwin/postinstall.in >packaging/darwin/scripts/postinstall
-	chmod 755 packaging/darwin/scripts/postinstall
-	mkdir -p packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/
-	$(HOST_BUILD_DIR)/crc-embedder download packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/
-
-	tar -C packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/ -xvzf packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/crc-tray-macos.tar.gz
-	rm packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/crc-tray-macos.tar.gz
-
-	cp $(HYPERKIT_BUNDLENAME) packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/
-	cp $(BUILD_DIR)/macos-amd64/crc packaging/root/"$(MACOS_INSTALL_PATH)"/$(CRC_VERSION)/
-	cp LICENSE packaging/darwin/Resources/LICENSE.txt
-	pkgbuild --analyze --root packaging/root packaging/components.plist
-	plutil -replace BundleIsRelocatable -bool NO packaging/components.plist
-	pkgbuild --identifier com.redhat.crc.$(CRC_VERSION) --version $(CRC_VERSION) \
-		--scripts packaging/darwin/scripts \
-		--root packaging/root \
-		--install-location / \
-		--component-plist packaging/components.plist \
-		$(BUILD_DIR)/macos-amd64/crc.pkg
-	productbuild --distribution packaging/darwin/Distribution \
-		--resources packaging/darwin/Resources \
-		--package-path $(BUILD_DIR)/macos-amd64 \
-		$(BUILD_DIR)/macos-amd64/crc-installer.pkg
-	rm $(BUILD_DIR)/macos-amd64/crc.pkg

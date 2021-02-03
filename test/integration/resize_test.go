@@ -2,9 +2,10 @@ package test_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"regexp"
 	"runtime"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,19 +14,25 @@ import (
 const testTopic = "resize"
 
 type testTopic struct {
-	Name  string `json:"topicName"`
-	Cases []Case `json:"cases"`
+	Description string `json:"description"`
+	Cases       []Case `json:"cases"`
 }
 
 type Case struct {
-	Name        string      `json:"name"`
-	Expect      string      `json:"expect"`
-	ErrorString string      `json:"error"`
-	Stdout      string      `json:"stdout"`
-	Parameters  []Parameter `json:"parameters"`
+	Name        string     `json:"name"`
+	Success     bool       `json:"success"`
+	ErrorString string     `json:"error"`
+	Stdout      string     `json:"stdout"`
+	Parameters  Parameters `json:"parameters"`
+	Checks      Validation `json:"checks"`
 }
 
-type Parameter struct {
+type Validation struct {
+	Expected  Parameters `json:"expected"`
+	Tolerance Parameters `json:"tolerance"`
+}
+
+type Parameters struct {
 	CPU    string `json:"cpu"`
 	Disk   string `json:"disk"`
 	Memory string `json:"memory"`
@@ -34,59 +41,68 @@ type Parameter struct {
 var _ = Describe("changing VM properties: cpus, disk, memory", func() {
 
 	byteInput, _ := ioutil.ReadAll(testTopic + "_test.json")
-	var resizeTopic testTopic
+	var resizeTopic testTopic // holds test declaration
 	json.Unmarshal(resizeTopic, byteInput)
 
-	Describe("memory, cpus, disk", func() {
+	Describe(resizeTopic.Description, func() {
 
 		It("setup CRC", func() {
 			Expect(RunCRCExpectSuccess("setup")).To(ContainSubstring("Setup is complete"))
 		})
 
-		for i, c := range resizeTopic.Cases {
-			// start + stop CRC for each case
-			infoString := fmt.Sprintf("start CRC with %s", c.Name)
-			It(infoString, func() {
-				if c.Expect == "pass" {
-					Expect(RunCRCExpectSuccess("start", "-b", bundleLocation, "-p", pullSecretLocation, "--memory", c.Parameters.Memory, "--cpus", c.Parameters.CPU, "--disk-size", c.Parameters.Disk)).To(ContainSubstring(c.Stdout))
+		testCase := resizeTopic.Cases[0]
+		// start + stop CRC for each case
+		It("start CRC with "+testCase.Name, func() {
+			if testCase.Success {
+				Expect(RunCRCExpectSuccess("start", "-b", bundleLocation, "-p", pullSecretLocation, "--memory", testCase.Parameters.Memory, "--cpus", testCase.Parameters.CPU, "--disk-size", testCase.Parameters.Disk)).To(ContainSubstring(testCase.Stdout))
 
-					// check if start applied the parameters
-					itString := fmt.Sprintf("check %s", c.Parameters.Memory)
-					It(itString, func() {
-						out, err := SendCommandToVM("cat /proc/meminfo")
+				It("check if memory was allocated correctly", func() {
+					out, err := SendCommandToVM("lsmem --summary -b")
+					Expect(err).NotTo(HaveOccurred())
+					re := regexp.MustCompile("Total online memory: *[0-9]+")
+					memoryLine := re.FindAllString(out, 1)[0]
+					memoryBytes := strings.Atoi(strings.Fields(memoryLine)[3])
+
+					expectedMem := strconv.Atoi(testCase.Checks.Expected.Memory)
+					toleranceMem := strconv.Atoi(testCase.Checks.Tolerance.Memory)
+					Expect(memoryBytes).Should(BeNumerically("<", expectedMem+toleranceMem))
+					Expect(memoryBytes).Should(BeNumerically(">", expectedMem-toleranceMem))
+				})
+
+				It("check if CPU was allocated correctly", func() {
+					out, err := SendCommandToVM("cat /proc/cpuinfo")
+					Expect(err).NotTo(HaveOccurred())
+					re := regexp.MustCompile("processor *: *[0-9]+")
+					cpuLine := re.FindAllString(out, 1)[testCase.Checks.Expected.CPU]
+					memoryBytes := strings.Atoi(strings.Fields(memoryLine)[3])
+					Expect(out).Should(MatchRegexp(``))
+				})
+
+				// only check disk size on linux and windows
+				if os := runtime.GOOS; os == "linux" || os == "windows" {
+
+					It("check size of VM disk", func() {
+						out, err := SendCommandToVM("df -h")
 						Expect(err).NotTo(HaveOccurred())
-						Expect(out).Should(MatchRegexp(`MemTotal:[\s]*11\d{6}`))
+						Expect(out).Should(MatchRegexp(`.*coreos-luks-root-nocrypt[\s]*40G`))
+					})
+				} else { // darwin
+					It("check size of VM disk", func() {
+						out, err := SendCommandToVM("df -h")
+						Expect(err).NotTo(HaveOccurred())
+						Expect(out).Should(MatchRegexp(`.*coreos-luks-root-nocrypt[\s]*31G`)) // default
 					})
 
-					It(itString, func() {
-						out, err := SendCommandToVM("cat /proc/cpuinfo")
-						Expect(err).NotTo(HaveOccurred())
-						Expect(out).Should(MatchRegexp(`processor[\s]*\:[\s]*5`))
-					})
-
-					// only check disk size on linux and windows
-					if os := runtime.GOOS; os == "linux" || os == "windows" {
-
-						It("check size of VM disk", func() {
-							out, err := SendCommandToVM("df -h")
-							Expect(err).NotTo(HaveOccurred())
-							Expect(out).Should(MatchRegexp(`.*coreos-luks-root-nocrypt[\s]*40G`))
-						})
-					} else { // darwin
-						It("check size of VM disk", func() {
-							out, err := SendCommandToVM("df -h")
-							Expect(err).NotTo(HaveOccurred())
-							Expect(out).Should(MatchRegexp(`.*coreos-luks-root-nocrypt[\s]*31G`)) // default
-						})
-
-					}
-
-				} else {
-					Expect(RunCRCExpectFail("start", "-b", bundleLocation, "-p", pullSecretLocation, "--memory", c.Parameters.Memory, "--cpus", c.Parameters.CPU, "--disk-size", c.Parameters.Disk)).To(ContainSubstring(c.ErrorString))
 				}
-			})
 
-		}
+			} else {
+				Expect(RunCRCExpectFail("start", "-b", bundleLocation, "-p", pullSecretLocation, "--memory", c.Parameters.Memory, "--cpus", c.Parameters.CPU, "--disk-size", c.Parameters.Disk)).To(ContainSubstring(c.ErrorString))
+			}
+		})
+
+		// check if start applied the parameters
+
+		//---------------------------------------------------------- FORMER CODE -------------------------------------------------------
 
 		It("stop CRC", func() {
 			Expect(RunCRCExpectSuccess("stop", "-f")).To(ContainSubstring("Stopped the OpenShift cluster"))

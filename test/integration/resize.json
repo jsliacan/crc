@@ -1,61 +1,87 @@
 {
-	"topicName": "resize"
+	"description": "Vary VM's parameters: memory, cpus, and disk size",
 	"cases": [
 		{
 			"name": "custom parameters",
-			"expect": "pass",
-			"error": "nil",
-			"stdout": "Started the OpenShift cluster"
-			"parameters":
-			{
+			"success": true,
+			"error": "",
+			"stdout": "Started the OpenShift cluster",
+			"parameters": {
 				"cpu": 6,
 				"disk": 40,
 				"memory": 12000
+			},
+			"checks": {
+				"expected": {
+					"cpu": 6,
+					"disk": 40,
+					"memory": 12616466432
+				},
+				"tolerance": {
+					"cpu": 0,
+					"disk": 0.1,
+					"memory": 5000000
+				}
 			}
-		}
+		},
 		{
 			"name": "insufficient memory",
-			"expect": "fail",
+			"success": false,
 			"error": "requires memory in MiB >= 9216",
+			"stdout": "",
 			"parameters": {
 				"memory": 9000
 			}
-		}
+		},
 		{
 			"name": "insufficient cpus",
-			"expect": "fail",
-			"error": "",
+			"success": false,
+			"error": "requires CPUs >= 4",
+			"stdout": "",
 			"parameters": {
 				"cpu": 3
 			}
-		}
+		},
 		{
 			"name": "smaller disk of valid size",
-			"expect": "fail",
-			"error": "",
+			"success": false,
+			"error": "blablablablablablabla",
+			"stdout": "",
 			"parameters": {
 				"disk": 35
 			}
-		}
+		},
 		{
 			"name": "smaller disk of insufficient size",
-			"expect": "fail",
-			"error": "",
+			"success": false,
+			"error": "blabalblaablabla",
+			"stdout": "",
 			"parameters": {
 				"disk": 30
 			}
-		}
+		},
 		{
-			"name": "default",
-			"expect": "pass",
+			"name": "default settings",
+			"success": true,
 			"error": "",
+			"stdout": "Started the OpenShift cluster",
 			"parameters": {
 				"cpu": null,
 				"disk": null,
 				"memory": null
+			},
+			"checks": {
+				"expected": {
+					"cpu": 4,
+					"disk": 31,
+					"memory": 9663676416
+				},
+				"tolerance": {
+					"cpu": 0,
+					"disk": 0.5,
+					"memory": 500000
+				}
 			}
 		}
-		
 	]
-	
 }

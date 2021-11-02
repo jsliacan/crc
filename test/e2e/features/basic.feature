@@ -59,11 +59,11 @@ Feature: Basic test
 
     @linux
     Scenario: Missing CRC setup
-	Given executing "rm ~/.crc/bin/crc-driver-libvirt" succeeds
+        Given executing "rm ~/.crc/bin/crc-driver-libvirt" succeeds
         Then executing "crc setup --check-only" fails
         And starting CRC with default bundle fails
-	And stderr should contain "Preflight checks failed during `crc start`, please try to run `crc setup` first in case you haven't done so yet"
-	And executing "crc setup" succeeds
+        And stderr should contain "Preflight checks failed during `crc start`, please try to run `crc setup` first in case you haven't done so yet"
+        And executing "crc setup" succeeds
 
     @darwin
     Scenario: CRC setup on Mac
@@ -81,10 +81,14 @@ Feature: Basic test
     Scenario: CRC setup on Windows
         When executing crc setup command succeeds
         Then stderr should contain "Extracting bundle from the CRC executable" if bundle is embedded
-        Then stderr should contain "Checking Windows 10 release"
-        Then stderr should contain "Checking if Hyper-V is installed"
-        Then stderr should contain "Checking if user is a member of the Hyper-V Administrators group"
-        Then stderr should contain "Checking if the Hyper-V virtual switch exist"
+        # Then stderr should contain "Checking Windows 10 release"
+        # Then stderr should contain "Checking if Hyper-V is installed"
+        # Then stderr should contain "Checking if user is a member of the Hyper-V Administrators group"
+        # Then stderr should contain "Checking if the Hyper-V virtual switch exist"
+        Then stderr should contain "Checking if current user is in Hyper-V Admins group"
+        Then stderr should contain "Checking if CRC bundle is extracted in '$HOME/.crc'"
+        Then stderr should contain "Your system is correctly setup"
+
 
     @darwin @linux @windows
     Scenario: Request start with monitoring stack

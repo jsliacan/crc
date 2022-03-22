@@ -195,7 +195,7 @@ ifndef PULL_SECRET_PATH
 export PULL_SECRET_PATH = $(HOME)/Downloads/crc-pull-secret
 endif
 ifndef BUNDLE_PATH
-export BUNDLE_PATH = 
+export BUNDLE_PATH = $(HOME)/Downloads/crc_libvirt_$(OPENSHIFT_VERSION).$(BUNDLE_EXTENSION)
 endif
 integration:
 	@go test -timeout=60m $(REPOPATH)/test/integration -v

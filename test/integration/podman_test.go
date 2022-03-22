@@ -1,7 +1,7 @@
 package test_test
 
 import (
-	"os/exec"
+	"os"
 	"runtime"
 
 	. "github.com/onsi/ginkgo"
@@ -33,15 +33,22 @@ var _ = Describe("podman preset", func() {
 		})
 
 		It("podman-env", func() {
-			var cmd = exec.Command("bash", "-c", "eval $(crc podman-env)")
-			switch runtime.GOOS {
-			case "windows":
-				cmd = exec.Command("powershell", "crc podman-env | Invoke Expression")
-			case "darwin":
-				cmd = exec.Command("zsh", "-c", "eval $(crc podman-env)")
+			// Do what 'eval $(crc podman-env) would do
+			path := os.ExpandEnv("$HOME/.crc/bin/oc:$PATH")
+			csshk := os.ExpandEnv("$HOME/.crc/machines/crc/id_ecdsa")
+			dh := os.ExpandEnv("unix:///$HOME/.crc/machines/crc/docker.sock")
+			ch := "ssh://core@127.0.0.1:2222/run/user/1000/podman/podman.sock"
+			if runtime.GOOS == "windows" {
+				dh = os.ExpandEnv("npipe:////./pipe/rc-podman")
 			}
-			_, err := cmd.Output()
-			Expect(err).NotTo(HaveOccurred())
+			if runtime.GOOS == "linux" {
+				ch = "ssh://core@192.168.130.11:22/run/user/1000/podman/podman.sock"
+			}
+
+			os.Setenv("PATH", path)
+			os.Setenv("CONTAINER_SSHKEY", csshk)
+			os.Setenv("CONTAINER_HOST", ch)
+			os.Setenv("DOCKER_HOST", dh)
 		})
 
 		It("version", func() {

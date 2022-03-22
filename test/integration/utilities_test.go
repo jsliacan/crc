@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -42,7 +43,10 @@ func NewCRCCommand(args ...string) *CRCBuilder {
 
 // NewPodmanCommand returns a PodmanBuilder for running CRC.
 func NewPodmanCommand(args ...string) *PodmanBuilder {
-	cmd := exec.Command("podman-remote", args...)
+	cmd := exec.Command("podman", args...)
+	if runtime.GOOS == "linux" {
+		cmd = exec.Command("podman-remote", args...)
+	}
 	return &PodmanBuilder{
 		cmd: cmd,
 	}

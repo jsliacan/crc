@@ -2,6 +2,7 @@ package test_test
 
 import (
 	"os/exec"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,7 +33,13 @@ var _ = Describe("podman preset", func() {
 		})
 
 		It("podman-env", func() {
-			cmd := exec.Command("bash", "-c", "eval", "$(crc podman-env)")
+			var cmd = exec.Command("bash", "-c", "eval $(crc podman-env)")
+			switch runtime.GOOS {
+			case "windows":
+				cmd = exec.Command("powershell", "crc podman-env | Invoke Expression")
+			case "darwin":
+				cmd = exec.Command("zsh", "-c", "eval $(crc podman-env)")
+			}
 			_, err := cmd.Output()
 			Expect(err).NotTo(HaveOccurred())
 		})

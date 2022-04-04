@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-OPENSHIFT_VERSION ?= 4.10.4
+OPENSHIFT_VERSION ?= 4.10.3
 PODMAN_VERSION ?= 3.4.4
 BUNDLE_EXTENSION = crcbundle
 CRC_VERSION = 2.0.1
@@ -195,7 +195,7 @@ ifndef PULL_SECRET_PATH
 export PULL_SECRET_PATH = $(HOME)/Downloads/crc-pull-secret
 endif
 ifndef BUNDLE_PATH
-export BUNDLE_PATH = $(HOME)/Downloads/crc_libvirt_$(OPENSHIFT_VERSION).$(BUNDLE_EXTENSION)
+export BUNDLE_PATH =
 endif
 integration:
 	@go test -timeout=60m $(REPOPATH)/test/integration -v

@@ -1,6 +1,7 @@
 package test_test
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -34,16 +35,21 @@ var _ = Describe("podman preset", func() {
 
 		It("podman-env", func() {
 			// Do what 'eval $(crc podman-env) would do
-			path := os.ExpandEnv("$HOME/.crc/bin/oc:$PATH")
-			csshk := os.ExpandEnv("$HOME/.crc/machines/crc/id_ecdsa")
-			dh := os.ExpandEnv("unix:///$HOME/.crc/machines/crc/docker.sock")
+			path := os.ExpandEnv("${HOME}/.crc/bin/oc:$PATH")
+			csshk := os.ExpandEnv("${HOME}/.crc/machines/crc/id_ecdsa")
+			dh := os.ExpandEnv("unix:///${HOME}/.crc/machines/crc/docker.sock")
 			ch := "ssh://core@127.0.0.1:2222/run/user/1000/podman/podman.sock"
 			if runtime.GOOS == "windows" {
-				dh = os.ExpandEnv("npipe:////./pipe/rc-podman")
+				dh = "npipe:////./pipe/rc-podman"
 			}
 			if runtime.GOOS == "linux" {
 				ch = "ssh://core@192.168.130.11:22/run/user/1000/podman/podman.sock"
 			}
+
+			fmt.Println(path)
+			fmt.Println(csshk)
+			fmt.Println(ch)
+			fmt.Println(dh)
 
 			os.Setenv("PATH", path)
 			os.Setenv("CONTAINER_SSHKEY", csshk)

@@ -1477,26 +1477,20 @@ $ cd sample-app</pre>
 </div>
 </li>
 <li>
-<p>Create a component from a sample application on GitHub:</p>
+<p>Clone an example Node.js application:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ odo create nodejs --s2i --git https://github.com/openshift/nodejs-ex</pre>
+<pre>$ git clone https://github.com/openshift/nodejs-ex
+$ cd nodejs-ex</pre>
 </div>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>Creating a component from a remote Git repository will rebuild the application each time you run the <code class="command">odo push</code> command.
-To create a component from a local Git repository, see <a href="https://docs.openshift.com/container-platform/latest/cli_reference/developer_cli_odo/creating_and_deploying_applications_with_odo/creating-a-single-component-application-with-odo.html">Creating a single-component application with <code>odo</code></a> in the <code class="command">odo</code> documentation.</p>
+</li>
+<li>
+<p>Add a <code>nodejs</code> component to the application:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create nodejs</pre>
 </div>
-</td>
-</tr>
-</table>
 </div>
 </li>
 <li>

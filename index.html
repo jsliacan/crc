@@ -1316,17 +1316,6 @@ For more information, see <a href="https://code-ready.github.io/crc/#starting-th
 <p>A working OpenShift CLI (<code class="command">oc</code>) command.
 For more information, see <a href="https://code-ready.github.io/crc/#accessing-the-openshift-cluster-with-oc_gsg">Accessing the OpenShift cluster with the OpenShift CLI</a>.</p>
 </li>
-<li>
-<p>An installation of <code class="command">podman</code> or <code class="command">docker</code>.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>For Docker, add <code>default-route-openshift-image-registry.apps-crc.testing</code> as an insecure registry.
-For more information, see <a href="https://docs.docker.com/registry/insecure/">the Docker documentation</a>.</p>
-</li>
-</ul>
-</div>
-</li>
 </ul>
 </div>
 <div class="olist arabic">
@@ -1358,7 +1347,7 @@ For more information, see <a href="https://docs.docker.com/registry/insecure/">t
 <p>Log in to the registry as that user with its token:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ podman login -u kubeadmin -p $(oc whoami -t) default-route-openshift-image-registry.apps-crc.testing --tls-verify=false</pre>
+<pre>$ oc registry login --insecure=true</pre>
 </div>
 </div>
 </li>
@@ -1371,26 +1360,10 @@ For more information, see <a href="https://docs.docker.com/registry/insecure/">t
 </div>
 </li>
 <li>
-<p>Pull an example container image:</p>
+<p>Mirror an example container image:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ podman pull quay.io/libpod/alpine</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Tag the image, including namespace details:</p>
-<div class="listingblock">
-<div class="content">
-<pre>$ podman tag alpine:latest default-route-openshift-image-registry.apps-crc.testing/demo/alpine:latest</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Push the container image to the internal registry:</p>
-<div class="listingblock">
-<div class="content">
-<pre>$ podman push default-route-openshift-image-registry.apps-crc.testing/demo/alpine:latest --tls-verify=false</pre>
+<pre>$ oc image mirror registry.access.redhat.com/ubi8/ubi:latest=default-route-openshift-image-registry.apps-crc.testing/demo/ubi8:latest --insecure=true --filter-by-os=linux/amd64</pre>
 </div>
 </div>
 </li>
@@ -1406,7 +1379,7 @@ For more information, see <a href="https://docs.docker.com/registry/insecure/">t
 <p>Enable image lookup in the imagestream:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ oc set image-lookup alpine</pre>
+<pre>$ oc set image-lookup ubi8</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1417,7 +1390,7 @@ For more information, see <a href="https://docs.docker.com/registry/insecure/">t
 <p>Create a pod using the recently pushed image:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ oc run demo --image=alpine --command -- sleep 600s</pre>
+<pre>$ oc run demo --image=ubi8 --command -- sleep 600s</pre>
 </div>
 </div>
 </li>

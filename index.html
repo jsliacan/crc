@@ -601,8 +601,9 @@ This can cause issues when, for example, a proxy is run in the same address spac
 <div class="sect3">
 <h4 id="minimum-system-requirements-hardware_gsg"><a class="anchor" href="#minimum-system-requirements-hardware_gsg"></a><a class="link" href="#minimum-system-requirements-hardware_gsg">2.1.1. Hardware requirements</a></h4>
 <div class="paragraph">
-<p>CRC is supported only on AMD64 and Intel 64 processor architectures.
-CRC does not support the ARM-based M1 architecture.
+<p>CRC is supported on AMD64 and Intel 64 processor architectures.
+The Podman container runtime preset is supported on the ARM-based M1 architecture.
+The OpenShift Container Platform preset is not supported on the M1 architecture.
 CRC does not support nested virtualization.</p>
 </div>
 <div class="paragraph">
@@ -690,7 +691,7 @@ CRC does not work on earlier versions of macOS.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>On Linux, CRC is supported only on Red&#160;Hat Enterprise&#160;Linux/CentOS 7.5 or later (including 8.x versions) and on the latest two stable Fedora releases.</p>
+<p>On Linux, CRC is supported only on the latest two Red&#160;Hat Enterprise&#160;Linux/CentOS 7, 8 and 9 minor releases and on the latest two stable Fedora releases.</p>
 </li>
 <li>
 <p>When using Red&#160;Hat Enterprise&#160;Linux, the machine running CRC must be <a href="https://access.redhat.com/solutions/253273">registered with the Red Hat Customer Portal</a>.</p>

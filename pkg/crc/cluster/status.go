@@ -18,7 +18,7 @@ func WaitForClusterStable(ctx context.Context, ip string, kubeconfigFilePath str
 	startTime := time.Now()
 
 	retryDuration := 30 * time.Second
-	retryCount := 20 // 10 minutes
+	retryCount := 60 // 30 minutes
 
 	if proxy.IsEnabled() {
 		// In case proxy is enabled increase the retry count

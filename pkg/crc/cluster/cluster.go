@@ -443,7 +443,7 @@ func WaitForAPIServer(ctx context.Context, ocConfig oc.Config) error {
 		logging.Debug(stdout)
 		return nil
 	}
-	return errors.Retry(ctx, 4*time.Minute, waitForAPIServer, time.Second)
+	return errors.Retry(ctx, 30*time.Minute, waitForAPIServer, time.Second)
 }
 
 func DeleteOpenshiftAPIServerPods(ctx context.Context, ocConfig oc.Config) error {

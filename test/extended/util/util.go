@@ -1,8 +1,10 @@
 package util
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -173,4 +175,15 @@ func MatchRepetitionsWithRetry(expression string, match func(string) error, matc
 			}
 		}
 	}
+}
+
+func StructToXMLFile(fileName string, contentStruct interface{}) error {
+	file, err := xml.MarshalIndent(contentStruct, "", " ")
+	if err != nil {
+		fmt.Printf("Failed to marshal XML: %s", err)
+		return err
+	}
+
+	err = ioutil.WriteFile(fileName, file, 0644)
+	return err
 }

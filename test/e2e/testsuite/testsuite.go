@@ -398,6 +398,8 @@ func InitializeScenario(s *godog.ScenarioContext) {
 		DeletingPodSucceedsOrFails)
 	s.Step(`^pulling image "(.*)", logging in, and pushing local image to internal registry succeeds$`,
 		PullLoginTagPushImageSucceeds)
+	s.Step(`^run start-delete on repeat "(\d+)" times with "(\d*(?:ms|s|m))" cluster availability requirement$`,
+		RunStartDeleteOnRepeat)
 
 	// CRC file operations
 	s.Step(`^file "([^"]*)" exists in CRC home folder$`,
@@ -766,6 +768,55 @@ func DeletingPodSucceedsOrFails(expected string) error {
 		err = util.ExecuteCommandSucceedsOrFails("oc delete pod $POD --now", expected)
 	}
 	return err
+}
+
+func RunStartDeleteOnRepeat(numRepeats int, timeout string) error {
+
+	type records struct {
+		Failed     int `xml:"failed"`
+		NotRunning int `xml:"notRunning"`
+		Running    int `xml:"running"`
+	}
+
+	var record records
+
+	timeoutInNanoseconds, err := time.ParseDuration(timeout)
+	if err != nil {
+		return err
+	}
+	totalTimeoutInSeconds := int(timeoutInNanoseconds / time.Second)
+
+	for i := 0; i < numRepeats; i++ {
+		err := StartCRCWithDefaultBundleSucceedsOrFails("succeeds")
+
+		// start fails
+		if err != nil {
+			record.Failed += 1
+			fmt.Printf("Failed to start CRC: %s", err)
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		}
+
+		// start succeeds
+		err = cmd.WaitForClusterInStateCustom("running", 3, 25, totalTimeoutInSeconds) // stability for ~1m30s
+		if err != nil {                                                                // state not Running
+			fmt.Printf("Cluster not in running state: %s", err)
+			record.NotRunning += 1
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		} else { // state Running
+			record.Running += 1
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		}
+
+		// crc delete has exit code 1 if machine already doesn't exist, so using cleanup + setup instead
+		err1 := ExecuteCommandWithExpectedExitStatus("cleanup", "succeeds")
+		err2 := ExecuteSingleCommandWithExpectedExitStatus("setup", "succeeds")
+		if (err1 != nil) || (err2 != nil) {
+			os.Exit(1)
+		}
+	}
+
+	outXMLFile := filepath.Join(util.TestResultsDir, "p_start-stop.xml")
+	return util.StructToXMLFile(outXMLFile, record)
 }
 
 func PodmanCommandIsAvailable() error {

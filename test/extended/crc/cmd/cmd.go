@@ -130,6 +130,11 @@ func WaitForClusterInState(state string) error {
 		clusterStateRetryCount, clusterStateTimeout)
 }
 
+func WaitForClusterInStateCustom(state string, numConsecutive int, numChecks int, totalTimeout int) error {
+	return util.MatchRepetitionsWithRetry(state, CheckCRCStatus, numConsecutive,
+		numChecks, totalTimeout)
+}
+
 func CheckCRCStatus(state string) error {
 	expression := `.*OpenShift: .*Running \(v\d+\.\d+\.\d+.*\).*`
 	if state == "stopped" {

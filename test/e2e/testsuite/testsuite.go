@@ -398,8 +398,10 @@ func InitializeScenario(s *godog.ScenarioContext) {
 		DeletingPodSucceedsOrFails)
 	s.Step(`^pulling image "(.*)", logging in, and pushing local image to internal registry succeeds$`,
 		PullLoginTagPushImageSucceeds)
-	s.Step(`^run start-delete on repeat "(\d+)" times with "(\d*(?:ms|s|m))" cluster availability requirement$`,
-		RunStartDeleteOnRepeat)
+	s.Step(`^run start-delete on repeat "(\d+)" times with "(\d*(?:ms|s|m))" cluster stability requirement$`,
+		RunStartDeleteOnRepeatForStability)
+	s.Step(`^run start-delete on repeat "100" times checking for immediate running state$`,
+		RunStartDeleteOnRepeatForState)
 
 	// CRC file operations
 	s.Step(`^file "([^"]*)" exists in CRC home folder$`,
@@ -770,7 +772,7 @@ func DeletingPodSucceedsOrFails(expected string) error {
 	return err
 }
 
-func RunStartDeleteOnRepeat(numRepeats int, timeout string) error {
+func RunStartDeleteOnRepeatForStability(numRepeats int, timeout string) error {
 
 	type records struct {
 		Failed     int `xml:"failed"`
@@ -815,7 +817,49 @@ func RunStartDeleteOnRepeat(numRepeats int, timeout string) error {
 		}
 	}
 
-	outXMLFile := filepath.Join(util.TestResultsDir, "p_start-stop.xml")
+	outXMLFile := filepath.Join(util.TestResultsDir, "p_stability.xml")
+	return util.StructToXMLFile(outXMLFile, record)
+}
+
+func RunStartDeleteOnRepeatForState(numRepeats int) error {
+
+	type records struct {
+		Running    int `xml:"running"`
+		NotRunning int `xml:"notRunning"`
+		Failed     int `xml:"failed"` // 'crc start' failed
+	}
+
+	var record records
+
+	for i := 0; i < numRepeats; i++ {
+		err := StartCRCWithDefaultBundleSucceedsOrFails("succeeds")
+
+		// start fails
+		if err != nil {
+			record.Failed += 1
+			fmt.Printf("Failed to start CRC: %s", err)
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		}
+
+		// start succeeds
+		err = cmd.CheckCRCStatus("Running")
+		if err != nil { // state not Running
+			record.NotRunning += 1
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		} else { // state Running
+			record.Running += 1
+			fmt.Println("failed:", record.Failed, "notRunning:", record.NotRunning, "running:", record.Running)
+		}
+
+		// crc delete has exit code 1 if machine already doesn't exist, so using cleanup + setup instead
+		err1 := ExecuteCommandWithExpectedExitStatus("cleanup", "succeeds")
+		err2 := ExecuteSingleCommandWithExpectedExitStatus("setup", "succeeds")
+		if (err1 != nil) || (err2 != nil) {
+			os.Exit(1)
+		}
+	}
+
+	outXMLFile := filepath.Join(util.TestResultsDir, "p_state-after-start.xml")
 	return util.StructToXMLFile(outXMLFile, record)
 }
 

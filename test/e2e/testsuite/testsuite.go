@@ -253,7 +253,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 
 			// delete testproj namespace after a Scenario that used it
 			if tag.Name == "@needs_namespace" {
-				err := util.ExecuteCommand("oc delete namespace testproj")
+				err := util.ExecuteCommand("oc delete project testproj --force --grace-period=0")
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)

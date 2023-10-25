@@ -1,0 +1,161 @@
+name: Windows e2e
+
+on:
+  workflow_run:
+    workflows: [Build Windows installer]
+    types:
+      - completed
+          
+#  workflow_dispatch:
+#  schedule:
+#    - cron:  '30 0 * * *'
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        windows-version: ['11'] # ['10', '11']
+        windows-featurepack: ['22h2-ent']
+
+    steps:
+    # - name: Create instance
+    #   run: |
+    #     # Create instance
+    #     podman run -d --name windows-create --rm \
+    #       -v ${PWD}:/workspace:z \
+    #       -e ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }} \
+    #       -e ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }} \
+    #       -e ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }} \
+    #       -e ARM_CLIENT_SECRET='${{ secrets.ARM_CLIENT_SECRET }}' \
+    #       quay.io/rhqp/qenvs:v0.0.6-dev azure \
+    #         windows create \
+    #         --project-name 'windows-desktop' \
+    #         --backed-url 'file:///workspace' \
+    #         --conn-details-output '/workspace' \
+    #         --windows-version '${{ matrix.windows-version }}' \
+    #         --windows-featurepack '${{ matrix.windows-featurepack }}' \
+    #         --vmsize 'Standard_D8s_v4' \
+    #         --tags project=openshift-local \
+    #         --spot
+    #     # Check logs 
+    #     podman logs -f windows-create
+
+    # - name: Check instance system info
+    #   run: |
+    #     ssh -i id_rsa \
+    #       -o StrictHostKeyChecking=no \
+    #       -o UserKnownHostsFile=/dev/null \
+    #       -o ServerAliveInterval=30 \
+    #       -o ServerAliveCountMax=1200 \
+    #       $(cat username)@$(cat host) "systeminfo"
+
+    # - name: Emulate X session 
+    #   run: |
+    #     # use fake rdp to emulate an active x session
+    #     podman run -d --name x-session \
+    #       -e RDP_HOST=$(cat host) \
+    #       -e RDP_USER=$(cat username) \
+    #       -e RDP_PASSWORD=$(cat userpassword) \
+    #       quay.io/rhqp/frdp:v0.0.1
+    #     # Wait until the x session has been created
+    #     podman wait --condition running x-session
+    #     # Check logs for the x session
+    #     podman logs x-session
+    
+    - name: Download Windows installer  
+      id: download-artifact
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        workflow: windows-installer.yml
+        search_artifacts: true
+        name: Windows Installer (windows-2022)
+
+
+    # - name: Run CRC e2e tests
+    #   run: |
+    #     # Get latest built 
+    #     curl -OL https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/release-info.json
+    #     tag=$(jq -r '.version.crcVersion' release-info.json)
+    #     ocpVersion=$(jq -r '.version.openshiftVersion' release-info.json)
+    #     # Run e2e tests
+    #     podman run --rm -it --name crc-e2e \
+    #       -e PLATFORM=windows \
+    #       -e TARGET_HOST=$IP \
+    #       -e TARGET_HOST_USERNAME=$USER \
+    #       -e TARGET_HOST_KEY_PATH=/opt/crc/id_rsa \
+    #       -e PULL_SECRET_FILE_PATH=/opt/crc/pull-secret \
+    #       -e BUNDLE_VERSION=${ocpVersion} \
+    #       -v $PWD/pull-secret:/opt/crc/pull-secret:Z \
+    #       -v $PWD/output:/output:Z \
+    #       quay.io/crcont/crc-e2e:v${tag} crc-e2e/run.ps1 \
+    #         -targetFolder ${TARGET_FOLDER} \
+    #         -junitResultsPath ${TARGET_FOLDER}/junit \
+    #         -pullSecretFile ${TARGET_FOLDER}/pullsecret
+
+    #     podman run --rm -d --name crc-e2e-windows \
+    #       -e TARGET_HOST=$(cat host) \
+    #       -e TARGET_HOST_USERNAME=$(cat username) \
+    #       -e TARGET_HOST_KEY_PATH=/data/id_rsa \
+    #       -e TARGET_FOLDER=pd-e2e \
+    #       -e TARGET_RESULTS=crc-e2e-results-${tag}.xml \
+    #       -e OUTPUT_FOLDER=/data \
+    #       -e DEBUG=true \
+    #       -v $PWD:/data:z \
+    #       quay.io/crcont/crc-e2e:v${tag}  \
+    #           crc-e2e/run.ps1 \
+    #               -wslInstallFix 'false' \
+    #               -targetFolder crc-e2e \
+    #               -pdUrl "https://github.com/containers/podman-desktop/releases/download/${tag}/podman-desktop-${tag:1}.exe" \
+    #               -junitResultsFilename podman-desktop-e2e-results-${tag}.xml 
+    #     # Check logs 
+    #     podman logs -f pd-e2e-windows
+
+    # - name: Run podman functional e2e test
+    #   timeout-minutes: 60
+    #   run: |
+    #     # Get latest built 
+    #     tag=$(curl --silent https://api.github.com/repos/containers/podman-desktop/releases | jq -r 'map(select(.prerelease)) | first | .tag_name')
+    #     # Run e2e tests
+    #     podman run --rm -d --name podman-e2e \
+    #       -e TARGET_HOST=$(cat host) \
+    #       -e TARGET_HOST_USERNAME=$(cat username) \
+    #       -e TARGET_HOST_KEY_PATH=/data/id_rsa \
+    #       -e TARGET_FOLDER=podman-e2e \
+    #       -e TARGET_RESULTS=podman-e2e-results-${tag}.xml \
+    #       -e OUTPUT_FOLDER=/data \
+    #       -e DEBUG=true \
+    #       -v $PWD:/data:z \
+    #       quay.io/rhqp/podman-backend-e2e:v4.7.1-windows-amd64 \
+    #           podman-e2e/run.ps1 \
+    #               -targetFolder podman-e2e \
+    #               -podmanStart "true" \
+    #               -junitResultsFilename podman-e2e-results-${tag}.xml 
+    #     # Check logs 
+    #     podman logs -f podman-e2e
+
+    # - name: Upload e2e results
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: E2E-results-windows-${{ matrix.windows-version }}${{ matrix.windows-featurepack }}
+    #     path: |
+    #       podman-e2e-results-*.xml
+    #       podman-desktop-e2e-results-*.xml
+
+    # - name: Destroy instance
+    #   if: always()
+    #   run: |
+    #     # Destroy instance
+    #     podman run -d --name windows-destroy --rm \
+    #       -v ${PWD}:/workspace:z \
+    #       -e ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }} \
+    #       -e ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }} \
+    #       -e ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }} \
+    #       -e ARM_CLIENT_SECRET='${{ secrets.ARM_CLIENT_SECRET }}' \
+    #       quay.io/rhqp/qenvs:v0.0.6-dev azure \
+    #         windows destroy \
+    #         --project-name 'windows-desktop' \
+    #         --backed-url 'file:///workspace'
+    #     # Check logs
+    #     podman logs -f windows-destroy

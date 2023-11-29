@@ -1,0 +1,76 @@
+name: Build test images
+on:
+#   push:
+#     branches:
+#       - "main"
+  pull_request: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_E2E: crc-e2e
+  IMAGE_NAME_INTEGRATION: crc-integration
+
+jobs:
+  build-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    permissions:
+      packages: write
+      contents: read
+      
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build e2e image
+        env:
+            PR_NUMBER: ${{ github.event.number }}
+        run: |
+          CRC_E2E_IMG_VERSION=pr-${PR_NUMBER} IMG_E2E=${{ env.REGISTRY}}/${{ github.repository_owner }}/${{env.IMAGE_NAME_E2E}}:${CRC_E2E_IMG_VERSION} make containerized_e2e
+
+      - name: Push e2e image
+        env:
+            PR_NUMBER: ${{ github.event.number }}
+        run: |
+          podman push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{env.IMAGE_NAME_E2E}}:pr-${PR_NUMBER}
+
+  build-integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    permissions:
+      packages: write
+      contents: read
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build integration image
+        env:
+            PR_NUMBER: ${{ github.event.number }}
+        run: |
+          CRC_INTEGRATION_IMG_VERSION=pr-${PR_NUMBER} IMG_INTEGRATION=${{ env.REGISTRY}}/${{ github.repository_owner }}/${{env.IMAGE_NAME_INTEGRATION}}:${CRC_INTEGRATION_IMG_VERSION} make containerized_integration
+
+      - name: Push integration image
+        env:
+            PR_NUMBER: ${{ github.event.number }}
+        run: |
+          podman push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{env.IMAGE_NAME_INTEGRATION}}:pr-${PR_NUMBER}
+
+          

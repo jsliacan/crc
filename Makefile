@@ -193,7 +193,9 @@ containerized_e2e:
 ifndef CRC_E2E_IMG_VERSION
 CRC_E2E_IMG_VERSION=v$(CRC_VERSION)-$(COMMIT_SHA)
 endif
+ifndef IMG_E2E
 IMG_E2E = quay.io/crcont/crc-e2e:$(CRC_E2E_IMG_VERSION)
+endif
 containerized_e2e: clean
 	$(CONTAINER_RUNTIME) build -t $(IMG_E2E) -f images/build-e2e/Dockerfile .
 
@@ -203,7 +205,9 @@ containerized_integration:
 ifndef CRC_INTEGRATION_IMG_VERSION
 CRC_INTEGRATION_IMG_VERSION=v$(CRC_VERSION)-$(COMMIT_SHA)
 endif
+ifndef IMG_INTEGRATION
 IMG_INTEGRATION = quay.io/crcont/crc-integration:$(CRC_INTEGRATION_IMG_VERSION)
+endif
 containerized_integration: clean
 	$(CONTAINER_RUNTIME) build -t $(IMG_INTEGRATION) -f images/build-integration/Dockerfile .
 

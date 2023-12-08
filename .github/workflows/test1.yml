@@ -1,0 +1,19 @@
+name: Test 1
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  build-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      
+    steps:
+
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"

@@ -20,8 +20,11 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Work out correct id
+        env:
+          GH_CONTEXT: ${{ toJSON(github) }}
         run: |
-          COMMIT_ID=${{ toJSON(github) }} | jq -r '.event.after'
+          echo $GH_CONTEXT > gh_context.json
+          COMMIT_ID=$(cat gh_context.json | jq -r '.event.after')
           # if this is a new PR, .event.after is empty, use .sha instead in that case
           if [[ -z "$COMMIT_ID" ]]; then
             COMMIT_ID=$(cat gh_context.json | jq -r '.sha')
@@ -50,8 +53,11 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Work out correct id
+        env:
+          GH_CONTEXT: ${{ toJSON(github) }}
         run: |
-          COMMIT_ID=${{ toJSON(github) }} | jq -r '.event.after'
+          echo $GH_CONTEXT > gh_context.json
+          COMMIT_ID=$(cat gh_context.json | jq -r '.event.after')
           # if this is a new PR, .event.after is empty, use .sha instead in that case
           if [[ -z "$COMMIT_ID" ]]; then
             COMMIT_ID=$(cat gh_context.json | jq -r '.sha')

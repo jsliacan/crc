@@ -31,16 +31,15 @@ jobs:
         run: |
           set -xuo
 
-          # SHA used as ID to correlate artifacts between buld-tests, windows-installer, and windows-e2e workflows
-          echo "SHA=$(cat gh_context.json | jq -r '.sha')" >> "$GITHUB_ENV"
-
           COMMIT_ID=$(cat gh_context.json | jq -r '.event.after')
           # if this is a new PR, .event.after is empty, use .sha instead in that case
           if [[ -z "$COMMIT_ID" ]]; then
             COMMIT_ID=$(cat gh_context.json | jq -r '.sha')
           fi
 
-          # COMMIT_SHA used to identify commit whose status needs to be set to reflect test results
+          # COMMIT_SHA is used to identify:
+          #  - commit used as correlation ID between build-tests, windows-installer, and windows-e2e workflows
+          #  - commit whose status needs to be set to reflect test results
           echo "COMMIT_SHA=$COMMIT_ID" >> "$GITHUB_ENV"
 
       - name: Add status to the PR check
@@ -58,6 +57,27 @@ jobs:
           -H "Authorization: Bearer ${{ github.token }}" \
           https://api.github.com/repos/${{ github.repository }}/statuses/${{ env.COMMIT_SHA }} \
           -d "{\"state\":\"${OUTCOME}\", \"description\":\"${DESCRIPTION}\", \"context\":\"${CONTEXT}\", \"target_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+
+      - name: Download installer  
+        id: download-installer-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+          name: Windows Installer (windows-2022)
+
+      - name: Download e2e image  
+        id: download-images-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow_conclusion: completed
+          workflow: build-tests.yml
+          name: crc-e2e-id${{ env.COMMIT_SHA }}      
+
+      - name: Write pull-secret
+        env:
+          PULL_SECRET: ${{ secrets.PULL_SECRET }}
+        run: |
+          echo $PULL_SECRET > pull-secret
 
       - name: Create instance
         run: |
@@ -163,7 +183,7 @@ jobs:
             -v $PWD/pull-secret:/opt/crc/pull-secret:Z \
             -v $PWD/output:/output:Z \
             -v $PWD/id_rsa:/opt/crc/id_rsa:Z \
-            quay.io/crcont/crc-e2e:id-${{ env.SHA }} \
+            quay.io/crcont/crc-e2e:id-${{ env.COMMIT_SHA }} \
               -targetFolder ${TARGET_FOLDER} \
               -junitResultsPath ${TARGET_FOLDER}/junit
 

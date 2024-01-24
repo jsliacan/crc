@@ -78,7 +78,7 @@ jobs:
           PULL_SECRET: ${{ secrets.PULL_SECRET }}
         run: |
           echo $PULL_SECRET > pull-secret
-
+          
       - name: Create instance
         run: |
           # Create instance

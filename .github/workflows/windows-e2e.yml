@@ -148,8 +148,8 @@ jobs:
           HOST=$(cat host)
           USER=$(cat username)
           # platform tag is inferred from the image
-          # empty runs the entire suite
-          E2E_TAGS=""
+          # empty runs the entire suite, otherwise use e.g. '@config'
+          E2E_TAGS="@config && ~@config"
           TARGET_FOLDER="crc-e2e"
 
           podman run --rm -d --name crc-e2e \

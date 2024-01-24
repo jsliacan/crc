@@ -78,7 +78,7 @@ jobs:
           PULL_SECRET: ${{ secrets.PULL_SECRET }}
         run: |
           echo $PULL_SECRET > pull-secret
-
+          
       - name: Create instance
         run: |
           # Create instance
@@ -110,13 +110,6 @@ jobs:
             -o ServerAliveCountMax=1200 \
             $(cat username)@$(cat host) "systeminfo"
 
-      - name: Download installer  
-        id: download-installer-artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: ${{ github.event.workflow_run.workflow_id }}
-          name: Windows Installer (windows-2022)
-
       - name: Install CRC on host
         run: |
           # id_rsa for the host should be in pwd
@@ -143,20 +136,6 @@ jobs:
           
           # Check logs 
           podman logs -f crc-win-support
-
-      - name: Write pull-secret
-        env:
-          PULL_SECRET: ${{ secrets.PULL_SECRET }}
-        run: |
-          echo $PULL_SECRET > pull-secret
-
-      - name: Download e2e image  
-        id: download-images-artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow_conclusion: completed
-          workflow: build-tests.yml
-          name: crc-e2e-id${{ env.SHA }}
 
       - name: Run CRC e2e
         run: |

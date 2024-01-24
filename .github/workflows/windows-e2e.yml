@@ -48,7 +48,7 @@ jobs:
 
           OUTCOME="pending"
           DESCRIPTION="Running e2e on Windows"
-          CONTEXT="win-ci-e2e"
+          CONTEXT="ci/gh/e2e/windows-${{ matrix.windows-version }}-${{ matrix.windows-featurepack }}"
 
           # post result to commit status
           curl -L -v \
@@ -78,7 +78,7 @@ jobs:
           PULL_SECRET: ${{ secrets.PULL_SECRET }}
         run: |
           echo $PULL_SECRET > pull-secret
-          
+
       - name: Create instance
         run: |
           # Create instance
@@ -200,7 +200,7 @@ jobs:
           fi
 
           DESCRIPTION="Finished e2e on Windows"
-          CONTEXT="win-ci-e2e"
+          CONTEXT="ci/gh/e2e/windows-${{ matrix.windows-version }}-${{ matrix.windows-featurepack }}"
 
           # post result to commit status
           curl -L -v \

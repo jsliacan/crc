@@ -58,7 +58,7 @@ jobs:
         run: |
           set -xuo
 
-          OUTCOME="pending"
+          OUTCOME="In progress"
           DESCRIPTION="Running e2e on Windows"
           CONTEXT="ci/gh/e2e/windows-${{ matrix.windows-version }}-${{ matrix.windows-featurepack }}"
 

@@ -146,7 +146,7 @@ jobs:
           USER=$(cat username)
           # platform tag is inferred from the image
           # empty runs the entire suite
-          E2E_TAGS=""
+          E2E_TAGS="@config"
           TARGET_FOLDER="crc-e2e"
 
           podman run --rm -d --name crc-e2e \

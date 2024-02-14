@@ -154,6 +154,7 @@ jobs:
           while [[ $counter -gt 0 ]]
           do
             echo "counter: ${counter}"
+
             if ssh -i id_rsa -o ServerAliveInterval=30 -o ServerAliveCountMax=1200 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=3 -o BatchMode=yes ${USER}@${HOST} pwd
             then
               break

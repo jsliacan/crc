@@ -139,29 +139,19 @@ jobs:
           # load crc-e2e image from tar file
           podman load -i crc-e2e.tar
 
-          mkdir output
-          # id_rsa for the host should be in pwd 
-          
-          HOST=$(cat host)
-          USER=$(cat username)
-          # platform tag is inferred from the image
-          # empty runs the entire suite
-          E2E_TAGS=""
-          TARGET_FOLDER="crc-e2e"
-
+          # run e2e
           podman run --rm -d --name crc-e2e \
-            -e PLATFORM=windows \
-            -e TARGET_HOST=${HOST} \
-            -e TARGET_HOST_USERNAME=${USER} \
-            -e TARGET_HOST_KEY_PATH=/opt/crc/id_rsa \
-            -e PULL_SECRET_FILE_PATH=/opt/crc/pull-secret \
-            -e E2E_TAG_EXPRESSION=${E2E_TAGS} \
-            -v $PWD/pull-secret:/opt/crc/pull-secret:Z \
-            -v $PWD/output:/output:Z \
-            -v $PWD/id_rsa:/opt/crc/id_rsa:Z \
-            quay.io/crcont/crc-e2e:gh \
-              -targetFolder ${TARGET_FOLDER} \
-              -junitResultsPath ${TARGET_FOLDER}/junit
+            -e TARGET_HOST==$(cat host) \
+            -e TARGET_HOST_USERNAME=$(cat username) \
+            -e TARGET_HOST_KEY_PATH=/data/id_rsa \
+            -e TARGET_FOLDER=crc-e2e \
+            -e TARGET_RESULTS=results \
+            -e OUTPUT_FOLDER=/data \
+            -e DEBUG=true \
+            -v $PWD/pull-secret:/opt/crc/pull-secret:z \
+            -v $PWD:/data:z \
+            quay.io/crcont/crc-e2e:gh-dev-windows-amd64  \
+                crc-e2e/run.ps1 -junitFilename crc-e2e-junit.xml 
 
           # Check logs 
           podman logs -f crc-e2e

@@ -180,10 +180,7 @@ clean: clean_docs clean_macos_package clean_windows_msi
 
 .PHONY: build_e2e
 build_e2e: $(SOURCES)
-	GOARCH=amd64 GOOS=linux   go test ./test/e2e/ -tags "$(BUILDTAGS)" --ldflags="$(VERSION_VARIABLES)" -c -o $(BUILD_DIR)/linux-amd64/e2e.test
-	GOARCH=amd64 GOOS=windows go test ./test/e2e/ -tags "$(BUILDTAGS)" --ldflags="$(VERSION_VARIABLES)" -c -o $(BUILD_DIR)/windows-amd64/e2e.test.exe
-	GOARCH=amd64 GOOS=darwin  go test ./test/e2e/ -tags "$(BUILDTAGS)" --ldflags="$(VERSION_VARIABLES)" -c -o $(BUILD_DIR)/macos-amd64/e2e.test
-	GOARCH=arm64 GOOS=darwin  go test ./test/e2e/ -tags "$(BUILDTAGS)" --ldflags="$(VERSION_VARIABLES)" -c -o $(BUILD_DIR)/macos-arm64/e2e.test
+	go test ./test/e2e/ -tags "$(BUILDTAGS)" --ldflags="$(VERSION_VARIABLES)" -c -o $(BUILD_DIR)/e2e.test
 
 .PHONY: build_integration
 build_integration: $(SOURCES)
@@ -200,7 +197,7 @@ CRC_E2E_IMG_VERSION=v$(CRC_VERSION)-$(COMMIT_SHA)
 endif
 IMG_E2E = quay.io/crcont/crc-e2e:$(CRC_E2E_IMG_VERSION)
 containerized_e2e: clean
-	$(CONTAINER_RUNTIME) build -t $(IMG_E2E) -f images/build-e2e/Dockerfile .
+	${CONTAINER_RUNTIME} build -t ${IMG_E2E}-${OS}-${ARCH} -f images/build-e2e/Containerfile --build-arg=OS=${OS} --build-arg=ARCH=${ARCH} .
 
 #  Build the container image for integration
 .PHONY: containerized_integration

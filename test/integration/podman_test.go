@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("podman preset", Serial, Ordered, Label("podman-preset"), func() {
+var _ = Describe("podman-remote", Serial, Ordered, Label("microshift-preset"), func() {
 
 	// runs 1x after all the It blocks (specs) inside this Describe node
 	AfterAll(func() {
@@ -28,15 +28,24 @@ var _ = Describe("podman preset", Serial, Ordered, Label("podman-preset"), func(
 	Describe("basic use", Serial, Ordered, func() {
 
 		It("write to config", func() {
-			Expect(RunCRCExpectSuccess("config", "set", "preset", "podman")).To(ContainSubstring("please run 'crc setup' before 'crc start'"))
+			Expect(RunCRCExpectSuccess("config", "set", "preset", "microshift")).To(ContainSubstring("please run 'crc setup' before 'crc start'"))
 		})
 
 		It("setup CRC", func() {
-			Expect(RunCRCExpectSuccess("setup")).To(ContainSubstring("Your system is correctly setup for using CRC"))
+			if bundlePath == "" {
+				Expect(RunCRCExpectSuccess("setup")).To(ContainSubstring("Your system is correctly setup for using CRC"))
+			} else {
+				Expect(RunCRCExpectSuccess("setup", "-b", bundlePath)).To(ContainSubstring("Your system is correctly setup for using CRC"))
+			}
 		})
 
 		It("start CRC", func() {
-			Expect(RunCRCExpectSuccess("start")).To(ContainSubstring("podman runtime is now running"))
+			if bundlePath == "" {
+				Expect(RunCRCExpectSuccess("start", "-p", pullSecretPath)).To(ContainSubstring("Started the MicroShift cluster"))
+			} else {
+				Expect(RunCRCExpectSuccess("start", "-b", bundlePath, "-p", pullSecretPath)).To(ContainSubstring("Started the MicroShift cluster"))
+			}
+			Expect(RunCRCExpectSuccess("start")).To(ContainSubstring("running"))
 		})
 
 		It("podman-env", func() {

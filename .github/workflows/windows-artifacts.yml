@@ -97,3 +97,56 @@ jobs:
         with:
           name: gh_context
           path: ./gh_context.json
+
+  build-e2e-cut:
+    if: startsWith(github.event.head_commit.message, 'cut ')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      
+      - name: Get version
+        run: |
+          msg_version=$(echo ${{ github.event.head_commit.message }} | cut -d' ' -f2)
+          echo "VERSION=$msg_version" >> "$GITHUB_ENV"
+        
+      - name: Build and archive e2e image
+        # use github.sha as ID to correlate various workflows triggered by the same event
+        run: |
+          CRC_E2E_IMG_VERSION=v${{ env.VERSION }} make containerized_e2e
+          podman save -o ${{ env.IMAGE_NAME_E2E }}.tar quay.io/crcont/${{ env.IMAGE_NAME_E2E}}:v${{ env.VERSION }}
+
+      - name: Upload e2e image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IMAGE_NAME_E2E }}-v${{ env.VERSION }}
+          path: ${{ env.IMAGE_NAME_E2E }}.tar
+
+  build-integration-cut:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        run: |
+          msg_version=$(echo ${{ github.event.head_commit.message }} | cut -d' ' -f2)
+          echo "VERSION=$msg_version" >> "$GITHUB_ENV"
+      
+      - name: Build and archive integration image
+        # use github.sha as ID to correlate various workflows triggered by the same event
+        run: |
+          CRC_INTEGRATION_IMG_VERSION=v${{ env.VERSION }} make containerized_integration
+          podman save -o ${{ env.IMAGE_NAME_INTEGRATION }}.tar quay.io/crcont/${{ env.IMAGE_NAME_INTEGRATION }}:v${{ env.VERSION }}
+      
+      - name: Upload integration image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IMAGE_NAME_INTEGRATION }}-v${{ env.VERSION }}
+          path: ${{ env.IMAGE_NAME_INTEGRATION }}.tar

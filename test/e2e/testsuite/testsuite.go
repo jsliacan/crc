@@ -184,11 +184,6 @@ func InitializeScenario(s *godog.ScenarioContext) {
 
 		for _, tag := range sc.Tags {
 
-			// if podman preset is activated, bundle will not be provided by the user
-			if tag.Name == "@podman-preset" {
-				userProvidedBundle = false
-			}
-
 			// copy data/config files to test dir
 			if tag.Name == "@testdata" {
 				err := util.CopyFilesToTestDir()
@@ -439,7 +434,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 		util.DownloadFileIntoLocation)
 	s.Step(`^writing text "([^"]*)" to file "([^"]*)" succeeds$`,
 		util.WriteToFile)
-	s.Step(`^removing (podman|openshift) bundle from cache succeeds$`,
+	s.Step(`^removing (openshift) bundle from cache succeeds$`,
 		RemoveBundleFromCache)
 
 	// File content checks
@@ -662,8 +657,8 @@ func RemoveBundleFromCache(presetName string) error {
 
 	var p preset.Preset
 
-	if presetName == "podman" {
-		p = preset.Podman
+	if presetName == "microshift" {
+		p = preset.Microshift
 	} else {
 		p = preset.OpenShift
 	}
